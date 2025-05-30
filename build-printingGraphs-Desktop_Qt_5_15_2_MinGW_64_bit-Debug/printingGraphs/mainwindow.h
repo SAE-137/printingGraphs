@@ -7,7 +7,8 @@
 #include <QFileSystemModel>
 #include <QTreeView>
 #include <QTableView>
-
+#include<QPushButton>
+#include<QLabel>
 
 
 QT_BEGIN_NAMESPACE
@@ -28,7 +29,7 @@ public:
 
 private slots:
     void on_selectionChangedSlot(const QItemSelection &selected, const QItemSelection &deselected);
-
+    void on_openFolder();
 private:
     Ui::MainWindow *ui;
 
@@ -36,6 +37,28 @@ private:
     QFileSystemModel *leftPartModel;
     QTreeView *treeView;
     QTableView *tableView;
+    // кнопки
+    QPushButton* m_openFolder = nullptr;
+
+    //надписи
+    QLabel* m_chartDiscription = nullptr;
 };
 
 #endif // MAINWINDOW_H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
