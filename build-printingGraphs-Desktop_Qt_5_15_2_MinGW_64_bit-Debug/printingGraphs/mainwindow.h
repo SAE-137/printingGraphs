@@ -9,7 +9,8 @@
 #include <QTableView>
 #include<QPushButton>
 #include<QLabel>
-
+#include<QComboBox>
+#include<QCheckBox>
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -39,9 +40,14 @@ private:
     QTableView *tableView;
     // кнопки
     QPushButton* m_openFolder = nullptr;
+    QPushButton* m_printGraph = nullptr;
 
     //надписи
     QLabel* m_chartDiscription = nullptr;
+
+    QComboBox* m_chartsType = nullptr;
+
+    QCheckBox* m_blackWhite = nullptr;
 };
 
 #endif // MAINWINDOW_H

@@ -25,14 +25,21 @@ MainWindow::MainWindow(QWidget *parent)
 
     //кнопки
     m_openFolder = new QPushButton("set files", central);
+    m_printGraph = new QPushButton("Print graph", central);
+    m_blackWhite = new QCheckBox("black-white", central);
 
     //надписи
     m_chartDiscription = new QLabel("select the chart type", central);
 
+    m_chartsType = new QComboBox();
 
+    //horizontal
     QHBoxLayout* settingsLayout = new QHBoxLayout();
     settingsLayout->addWidget(m_openFolder);
     settingsLayout->addWidget(m_chartDiscription);
+    settingsLayout->addWidget(m_chartsType);
+    settingsLayout->addWidget(m_blackWhite);
+    settingsLayout->addWidget(m_printGraph);
 
     // vertical layout
     QVBoxLayout* mainLayout = new QVBoxLayout();
