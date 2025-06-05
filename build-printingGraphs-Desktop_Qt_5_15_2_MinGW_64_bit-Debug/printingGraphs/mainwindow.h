@@ -1,31 +1,23 @@
-
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QWidget>
 #include <QFileSystemModel>
-#include <QTreeView>
-#include <QTableView>
-#include<QPushButton>
-#include<QLabel>
-#include<QComboBox>
-#include<QCheckBox>
-#include<QListView>
-
+#include <QListView>
+#include <QPushButton>
+#include <QLabel>
+#include <QComboBox>
+#include <QCheckBox>
 #include <QtCharts/QChartView>
-#include "DataContainer.h"
-#include "LineGraph.h"
+#include <QtCharts/QLineSeries>
 
 QT_BEGIN_NAMESPACE
-namespace Ui
-{
+namespace Ui {
 class MainWindow;
 }
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
-
 {
     Q_OBJECT
 
@@ -36,58 +28,25 @@ public:
     void FillComboBox();
 
 private slots:
-    void on_selectionChangedSlot(const QItemSelection &selected, const QItemSelection &deselected);
-    void on_setFiles();
+    void on_openFolder();
+    void on_fileSelected(const QModelIndex &index);
     void on_printGraph();
-
-
-
-
-
-
+    void on_blackWhiteToggled(bool checked);
 
 private:
     Ui::MainWindow *ui;
 
-    QFileSystemModel *rightPartModel;
-    QFileSystemModel *leftPartModel;
-    QTreeView *treeView;
-    QTableView *tableView;
-    // кнопки
-    QPushButton* m_setFiles = nullptr;
-    QPushButton* m_printGraph = nullptr;
+    QFileSystemModel *m_fileExplorer;
+    QListView *m_listView;
+    QtCharts::QChartView *chartView;
+    QPushButton *m_openFolder;
+    QPushButton *m_printGraph;
+    QCheckBox *m_blackWhite;
+    QComboBox *m_graphsType;
+    QLabel *m_chartDescription;
 
-    //надписи
-    QLabel* m_chartDiscription = nullptr;
-
-    QComboBox* m_graphsType = nullptr;
-
-    QCheckBox* m_blackWhite = nullptr;
-
-    QtCharts::QChartView* chartView;
-    DataContainer dataContainer;
-
-    LineGraph m_lineGraph;
-    QFileSystemModel* m_fileExplorer = nullptr;
-    QListView* m_listView = nullptr;
-
+    // Для хранения данных графика
+    QVector<QPointF> m_dataPoints;
 };
 
 #endif // MAINWINDOW_H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,95 +1,93 @@
-
-
 #include <QSplitter>
-#include <QListView>
-#include <QTreeView>
-#include <QFileSystemModel>
-#include <QItemSelectionModel>
-#include <QTableView>
-#include <QHeaderView>
-#include <QStatusBar>
-#include<QHBoxLayout>
-#include<QDebug>
-#include<QFileDialog>
-#include <QtCharts/QChartView>
-
-#include "ui_mainwindow.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QtCharts/QChart>
+#include <QtCharts/QLineSeries>
+#include <QFile>
+#include <QTextStream>
 
 #include "mainwindow.h"
+#include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    //Устанавливаем размер главного окна
-    this->setGeometry(100, 100, 1500, 500);
+    setGeometry(100, 100, 1500, 500);
+    setWindowTitle("Charts App");
 
-    //central
-    QWidget* central = new QWidget();
+    // Центральный виджет
+    QWidget *central = new QWidget(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(central);
 
-    //кнопки
-    m_setFiles = new QPushButton("set files", central);
+    // Кнопки и элементы управления
+    m_openFolder = new QPushButton("Open folder", central);
     m_printGraph = new QPushButton("Print graph", central);
-    m_blackWhite = new QCheckBox("black-white", central);
+    m_blackWhite = new QCheckBox("Black and white", central);
+    m_graphsType = new QComboBox(central);
+    m_chartDescription = new QLabel("Select the graph type", central);
 
-    //надписи
-    m_chartDiscription = new QLabel("select the graph type", central);
-
-    m_graphsType = new QComboBox();
-
-    //horizontal
-    QHBoxLayout* settingsLayout = new QHBoxLayout();
-    settingsLayout->addWidget(m_setFiles);
-    settingsLayout->addWidget(m_chartDiscription);
+    // Layout для настроек
+    QHBoxLayout *settingsLayout = new QHBoxLayout();
+    settingsLayout->addWidget(m_openFolder);
+    settingsLayout->addWidget(m_chartDescription);
     settingsLayout->addWidget(m_graphsType);
     settingsLayout->addWidget(m_blackWhite);
     settingsLayout->addWidget(m_printGraph);
 
-    m_listView = new QListView(this);
-
+    // Файловый менеджер
+    m_listView = new QListView(central);
     m_fileExplorer = new QFileSystemModel(this);
     m_fileExplorer->setFilter(QDir::Files | QDir::NoDotAndDotDot);
-    m_fileExplorer->setRootPath(QDir::homePath());
+    m_fileExplorer->setNameFilters({"*.txt", "*.csv"}); // Фильтр для текстовых файлов
+    m_fileExplorer->setNameFilterDisables(false);
     m_listView->setModel(m_fileExplorer);
     m_listView->setRootIndex(m_fileExplorer->index(QDir::homePath()));
-    statusBar()->showMessage("Current dir: " + QDir::homePath());
     m_listView->setSelectionMode(QAbstractItemView::SingleSelection);
+    statusBar()->showMessage("Current dir: " + QDir::homePath());
 
-    // vertical layout
-    QVBoxLayout* mainLayout = new QVBoxLayout();
+    // График
+    chartView = new QtCharts::QChartView(this);
+    chartView->setRenderHint(QPainter::Antialiasing);
+
+    // Разделитель
+    QSplitter *splitter = new QSplitter(central);
+    splitter->addWidget(m_listView);
+    splitter->addWidget(chartView);
+    splitter->setStretchFactor(0, 0);
+    splitter->setStretchFactor(1, 1);
+
+    // Компоновка
     mainLayout->addLayout(settingsLayout);
-
-
-    //central
+    mainLayout->addWidget(splitter);
     central->setLayout(mainLayout);
     setCentralWidget(central);
 
-    connect(m_setFiles, &QPushButton::clicked, this, &MainWindow::on_setFiles);
-    //connects
-    //connect(m_listView, &QListView::clicked, this, &MainWindow::on_setFiles);
+    // Заполняем QComboBox
+    FillComboBox();
+
+    // Подключение сигналов
+    connect(m_openFolder, &QPushButton::clicked, this, &MainWindow::on_openFolder);
+    connect(m_listView, &QListView::clicked, this, &MainWindow::on_fileSelected);
+    connect(m_printGraph, &QPushButton::clicked, this, &MainWindow::on_printGraph);
+    connect(m_blackWhite, &QCheckBox::toggled, this, &MainWindow::on_blackWhiteToggled);
 }
 
-/*
- * Слот для обработки выбора элемента в TreeView.
- * Выбор осуществляется с помощью курсора.
- */
-
-void MainWindow::on_selectionChangedSlot(const QItemSelection &selected, const QItemSelection &deselected)
+void MainWindow::FillComboBox()
 {
+    m_graphsType->addItem("Line Graph", QVariant("line"));
+    m_graphsType->addItem("Scatter Graph", QVariant("scatter"));
+
 }
 
-void MainWindow::on_printGraph() {
-    // Твой код, например:
-    qDebug() << "Кнопка нажата!";
-}
-
-
-void MainWindow::on_setFiles()
+void MainWindow::on_openFolder()
 {
-    QFileDialog dlg(this, "Choose Files");
+    QFileDialog dlg(this, "Choose folder");
     dlg.setFileMode(QFileDialog::Directory);
-    dlg.setOption(QFileDialog::ShowDirsOnly, true);
+    dlg.setOption(QFileDialog::ShowDirsOnly, false);
     dlg.setOption(QFileDialog::DontUseNativeDialog);
     if (dlg.exec() != QDialog::Accepted) {
         return;
@@ -104,14 +102,72 @@ void MainWindow::on_setFiles()
     statusBar()->showMessage("Current dir: " + dir);
 }
 
-void MainWindow::FillComboBox()
+void MainWindow::on_fileSelected(const QModelIndex &index)
 {
+    QString filePath = m_fileExplorer->filePath(index);
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "Error", "Cannot open file: " + filePath);
+        return;
+    }
 
+    m_dataPoints.clear();
+    QTextStream in(&file);
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        QStringList values = line.split(" ", Qt::SkipEmptyParts);
+        if (values.size() >= 2) {
+            bool okX, okY;
+            double x = values[0].toDouble(&okX);
+            double y = values[1].toDouble(&okY);
+            if (okX && okY) {
+                m_dataPoints.append(QPointF(x, y));
+            }
+        }
+    }
+    file.close();
+
+    if (m_dataPoints.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No valid data in file: " + filePath);
+    }
+}
+
+void MainWindow::on_printGraph()
+{
+    if (m_dataPoints.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No data to display");
+        return;
+    }
+
+    QtCharts::QChart *chart = new QtCharts::QChart();
+    QtCharts::QLineSeries *series = new QtCharts::QLineSeries();
+
+    for (const QPointF &point : m_dataPoints) {
+        series->append(point);
+    }
+
+    chart->addSeries(series);
+    chart->createDefaultAxes();
+    chart->setTitle("Data Graph");
+
+    if (m_blackWhite->isChecked()) {
+        chart->setTheme(QtCharts::QChart::ChartThemeHighContrast);
+    } else {
+        chart->setTheme(QtCharts::QChart::ChartThemeLight);
+    }
+
+    chartView->setChart(chart);
+}
+
+void MainWindow::on_blackWhiteToggled(bool checked)
+{
+    if (chartView->chart()) {
+        chartView->chart()->setTheme(checked ? QtCharts::QChart::ChartThemeHighContrast : QtCharts::QChart::ChartThemeLight);
+        chartView->update();
+    }
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
-
-
