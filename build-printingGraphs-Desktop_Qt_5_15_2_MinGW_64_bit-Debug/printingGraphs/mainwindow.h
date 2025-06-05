@@ -12,6 +12,10 @@
 #include<QComboBox>
 #include<QCheckBox>
 
+#include <QtCharts/QChartView>
+#include "DataContainer.h"
+#include "LineGraph.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui
 {
@@ -31,6 +35,8 @@ public:
 private slots:
     void on_selectionChangedSlot(const QItemSelection &selected, const QItemSelection &deselected);
     void on_openFolder();
+    void on_printGraph();
+
 
 
 
@@ -53,6 +59,10 @@ private:
     QComboBox* m_chartsType = nullptr;
 
     QCheckBox* m_blackWhite = nullptr;
+
+    QtCharts::QChartView* chartView;
+    DataContainer dataContainer;
+
 };
 
 #endif // MAINWINDOW_H
