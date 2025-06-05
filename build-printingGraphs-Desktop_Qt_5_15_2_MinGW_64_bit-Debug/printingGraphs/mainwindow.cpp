@@ -10,6 +10,7 @@
 #include <QStatusBar>
 #include<QHBoxLayout>
 #include<QDebug>
+#include<QFileDialog>
 #include <QtCharts/QChartView>
 
 #include "ui_mainwindow.h"
@@ -28,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
     QWidget* central = new QWidget();
 
     //кнопки
-    m_openFolder = new QPushButton("set files", central);
+    m_setFiles = new QPushButton("set files", central);
     m_printGraph = new QPushButton("Print graph", central);
     m_blackWhite = new QCheckBox("black-white", central);
 
@@ -39,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     //horizontal
     QHBoxLayout* settingsLayout = new QHBoxLayout();
-    settingsLayout->addWidget(m_openFolder);
+    settingsLayout->addWidget(m_setFiles);
     settingsLayout->addWidget(m_chartDiscription);
     settingsLayout->addWidget(m_chartsType);
     settingsLayout->addWidget(m_blackWhite);
@@ -56,7 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     //connects
-    connect(m_openFolder, &QPushButton::clicked, this, &MainWindow::on_openFolder);
+    connect(m_setFiles, &QPushButton::clicked, this, &MainWindow::on_setFiles);
 }
 
 /*
@@ -74,9 +75,23 @@ void MainWindow::on_printGraph() {
 }
 
 
-void MainWindow::on_openFolder()
+void MainWindow::on_setFiles()
 {
-    qDebug() << "chek ";
+    QFileDialog dlg(this, "Choose folder");
+    dlg.setFileMode(QFileDialog::Directory);
+    dlg.setOption(QFileDialog::ShowDirsOnly, true);
+    dlg.setOption(QFileDialog::DontUseNativeDialog);
+    if (dlg.exec() != QDialog::Accepted) {
+        return;
+    }
+    const QStringList files = dlg.selectedFiles();
+    const QString dir = files.first();
+    if (dir.isEmpty()) {
+        return;
+    }
+    m_fileExplorer->setRootPath(dir);
+    m_listView->setRootIndex(m_fileExplorer->index(dir));
+    statusBar()->showMessage("Current dir: " + dir);
 }
 
 MainWindow::~MainWindow()

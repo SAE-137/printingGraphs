@@ -11,6 +11,7 @@
 #include<QLabel>
 #include<QComboBox>
 #include<QCheckBox>
+#include<QListView>
 
 #include <QtCharts/QChartView>
 #include "DataContainer.h"
@@ -34,7 +35,7 @@ public:
 
 private slots:
     void on_selectionChangedSlot(const QItemSelection &selected, const QItemSelection &deselected);
-    void on_openFolder();
+    void on_setFiles();
     void on_printGraph();
 
 
@@ -50,7 +51,7 @@ private:
     QTreeView *treeView;
     QTableView *tableView;
     // кнопки
-    QPushButton* m_openFolder = nullptr;
+    QPushButton* m_setFiles = nullptr;
     QPushButton* m_printGraph = nullptr;
 
     //надписи
@@ -64,6 +65,8 @@ private:
     DataContainer dataContainer;
 
     LineGraph m_lineGraph;
+    QFileSystemModel* m_fileExplorer = nullptr;
+    QListView* m_listView = nullptr;
 
 };
 
