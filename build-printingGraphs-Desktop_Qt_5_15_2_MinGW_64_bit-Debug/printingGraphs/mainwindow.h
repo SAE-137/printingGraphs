@@ -26,7 +26,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(std::shared_ptr<GraphFactory> graph, std::shared_ptr<ReaderFactory> reader, QWidget *parent = nullptr);
     ~MainWindow();
 
     void FillComboBox();

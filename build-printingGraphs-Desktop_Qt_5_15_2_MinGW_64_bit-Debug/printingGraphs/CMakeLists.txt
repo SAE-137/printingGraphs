@@ -35,6 +35,7 @@ set(PROJECT_SOURCES
     ReaderFactory.cpp
     ReaderFactory.h
     IOCContainer.h
+    AppConfigurator.h
 
 )
 

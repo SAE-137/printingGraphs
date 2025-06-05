@@ -12,9 +12,10 @@
 #include "qdebug.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(std::shared_ptr<GraphFactory> graph, std::shared_ptr<ReaderFactory> reader, QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , m_readerFactory(std::move(reader))
+    , m_graphFactory(std::move(graph))
 {
     ui->setupUi(this);
     setGeometry(100, 100, 1500, 500);
