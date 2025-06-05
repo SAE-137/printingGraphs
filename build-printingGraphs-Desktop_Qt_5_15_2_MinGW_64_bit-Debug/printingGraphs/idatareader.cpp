@@ -39,3 +39,5 @@ QDateTime IDataReader::interpretDate(const QString &input) const
 
     return {};
 }
+
+

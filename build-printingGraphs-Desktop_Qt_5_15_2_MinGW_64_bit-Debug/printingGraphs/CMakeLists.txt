@@ -34,6 +34,7 @@ set(PROJECT_SOURCES
     GraphFactory.h
     ReaderFactory.cpp
     ReaderFactory.h
+    IOCContainer.h
 
 )
 

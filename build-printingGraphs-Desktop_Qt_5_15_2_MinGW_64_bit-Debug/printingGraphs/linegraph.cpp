@@ -2,10 +2,7 @@
 
 #include "linegraph.h"
 
-LineGraph::LineGraph()
-{
 
-}
 
 void LineGraph::show(const DataContainer &dataset, QtCharts::QChartView* chartWidget)
 {
