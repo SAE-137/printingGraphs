@@ -1,6 +1,5 @@
 
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+
 #include <QSplitter>
 #include <QListView>
 #include <QTreeView>
@@ -11,6 +10,11 @@
 #include <QStatusBar>
 #include<QHBoxLayout>
 #include<QDebug>
+#include <QtCharts/QChartView>
+
+#include "ui_mainwindow.h"
+
+#include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -64,6 +68,10 @@ void MainWindow::on_selectionChangedSlot(const QItemSelection &selected, const Q
 {
 }
 
+void MainWindow::on_printGraph() {
+    // Твой код, например:
+    qDebug() << "Кнопка нажата!";
+}
 
 
 void MainWindow::on_openFolder()
