@@ -31,6 +31,11 @@ public:
 private slots:
     void on_selectionChangedSlot(const QItemSelection &selected, const QItemSelection &deselected);
     void on_openFolder();
+
+
+
+
+
 private:
     Ui::MainWindow *ui;
 
