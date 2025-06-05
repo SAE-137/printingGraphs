@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "igraphs.h"
+#include "jsonreader.h"
 #include <QMainWindow>
 #include <QFileSystemModel>
 #include <QListView>
@@ -47,6 +49,10 @@ private:
 
     // Для хранения данных графика
     QVector<QPointF> m_dataPoints;
+
+
+    std::shared_ptr<JsonReader> m_readerFactory;
+    std::shared_ptr<IGraphs> m_chartFactory;
 };
 
 #endif // MAINWINDOW_H

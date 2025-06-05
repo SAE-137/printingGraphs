@@ -32,6 +32,8 @@ set(PROJECT_SOURCES
     scattergraph.h
     GraphFactory.cpp
     GraphFactory.h
+    ReaderFactory.cpp
+    ReaderFactory.h
 
 )
 

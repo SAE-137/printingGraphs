@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_listView = new QListView(central);
     m_fileExplorer = new QFileSystemModel(this);
     m_fileExplorer->setFilter(QDir::Files | QDir::NoDotAndDotDot);
-    m_fileExplorer->setNameFilters({"*.txt", "*.csv"}); // Фильтр для текстовых файлов
+    m_fileExplorer->setNameFilters({"*.sqlite", "*.csv"}); // Фильтр для текстовых файлов
     m_fileExplorer->setNameFilterDisables(false);
     m_listView->setModel(m_fileExplorer);
     m_listView->setRootIndex(m_fileExplorer->index(QDir::homePath()));
@@ -102,9 +102,15 @@ void MainWindow::on_openFolder()
     statusBar()->showMessage("Current dir: " + dir);
 }
 
+std::shared_ptr<JsonReader> m_readerFactory;
+std::shared_ptr<IGraphs> m_chartFactory;
+
 void MainWindow::on_fileSelected(const QModelIndex &index)
 {
     QString filePath = m_fileExplorer->filePath(index);
+    QString ext  = QFileInfo(filePath).suffix();
+    //auto reader = m_readerFactory->getReader(ext);
+
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         QMessageBox::warning(this, "Error", "Cannot open file: " + filePath);
@@ -132,31 +138,12 @@ void MainWindow::on_fileSelected(const QModelIndex &index)
     }
 }
 
+
+
+
 void MainWindow::on_printGraph()
 {
-    if (m_dataPoints.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No data to display");
-        return;
-    }
 
-    QtCharts::QChart *chart = new QtCharts::QChart();
-    QtCharts::QLineSeries *series = new QtCharts::QLineSeries();
-
-    for (const QPointF &point : m_dataPoints) {
-        series->append(point);
-    }
-
-    chart->addSeries(series);
-    chart->createDefaultAxes();
-    chart->setTitle("Data Graph");
-
-    if (m_blackWhite->isChecked()) {
-        chart->setTheme(QtCharts::QChart::ChartThemeHighContrast);
-    } else {
-        chart->setTheme(QtCharts::QChart::ChartThemeLight);
-    }
-
-    chartView->setChart(chart);
 }
 
 void MainWindow::on_blackWhiteToggled(bool checked)
