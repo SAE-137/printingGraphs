@@ -1,7 +1,7 @@
 #include "sqlreader.h"
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
-#include <QtSql/QSqlError>  // Добавлено для QSqlError
+#include <QtSql/QSqlError>
 #include <QThread>
 #include <QDebug>
 

@@ -13,7 +13,7 @@ public:
     QString getName() const override;
 
 private:
-    QString m_name = "Line Graph";  // Аналог m_name из чужого кода
+    QString m_name = "Line Graph";
 };
 
 #endif // LINEGRAPH_H

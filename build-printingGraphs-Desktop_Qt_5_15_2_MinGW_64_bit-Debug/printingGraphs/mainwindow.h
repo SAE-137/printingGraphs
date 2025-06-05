@@ -50,7 +50,7 @@ private:
     QLabel *m_GraphDescription;
     DataContainer m_data;
 
-    // Для хранения данных графика
+
     QVector<QPointF> m_dataPoints;
 
 

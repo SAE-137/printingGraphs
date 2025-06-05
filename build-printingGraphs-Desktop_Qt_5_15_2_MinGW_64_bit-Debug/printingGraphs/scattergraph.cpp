@@ -1,68 +1,51 @@
-
-
-#include <QtCharts/QChartView>
+#include "scattergraph.h"
+#include <QtCharts/QChart>
+#include <QtCharts/QScatterSeries>
 #include <QtCharts/QDateTimeAxis>
 #include <QtCharts/QValueAxis>
-#include <QtCharts/QScatterSeries>
-#include "scattergraph.h"
-#include <limits>
 
-void ScatterGraph::show(const DataContainer& data, QtCharts::QChartView* view)
-{
-
-    auto* series = new QtCharts::QScatterSeries(view);
-    series->setMarkerSize(5.0);
-    series->setPen(QPen(Qt::darkMagenta, 1));
-
-    int total = data.DataPoints.size();
-    int maxPixels = view->width() > 0 ? view->width() : 1000;
-    int step = qMax(1, total / maxPixels);
-
-    double minY = std::numeric_limits<double>::max();
-    double maxY = std::numeric_limits<double>::lowest();
-
-    for (int i = 0; i < total; i += step) {
-        double y = data.DataPoints[i].second;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-        series->append(data.DataPoints[i].first.toMSecsSinceEpoch(), y);
+void ScatterGraph::show(const DataContainer& data, QtCharts::QChartView* view) {
+    if (data.isEmpty() || !view) {
+        return;
     }
 
+    // Создаём серию для точечного графика
+    QtCharts::QScatterSeries* series = new QtCharts::QScatterSeries();
+    series->setName("Data Points");
+    series->setMarkerSize(8.0);
 
-    auto* chart = new QtCharts::QChart();
+    // Заполняем серию данными
+    for (const auto& point : data.points()) {
+        series->append(point.first.toMSecsSinceEpoch(), point.second);
+    }
+
+    // Создаём график
+    QtCharts::QChart* chart = new QtCharts::QChart();
     chart->addSeries(series);
-    chart->legend()->hide();
-    chart->setAnimationOptions(QtCharts::QChart::NoAnimation);
+    chart->setTitle("Scatter Graph");
+    chart->legend()->setVisible(true);
 
-    auto* axisX = new QtCharts::QDateTimeAxis();
+    // Ось X (время)
+    QtCharts::QDateTimeAxis* axisX = new QtCharts::QDateTimeAxis();
     axisX->setFormat("dd.MM.yyyy HH:mm");
-    axisX->setLabelsAngle(-45);
-
-    int pixelsPerTick = 100;
-    int w = view->size().width();
-    int count = qMax(2, w / pixelsPerTick);
-    axisX->setTickCount(count);
-
-    if (!data.DataPoints.isEmpty()) {
-        axisX->setRange(data.DataPoints.first().first, data.DataPoints.last().first);
-    }
-
+    axisX->setTitleText("Time");
     chart->addAxis(axisX, Qt::AlignBottom);
     series->attachAxis(axisX);
 
-    auto* axisY = new QtCharts::QValueAxis();
-    axisY->setLabelFormat("%.2f");
-    axisY->setRange(minY, maxY);
-    axisY->setGridLineVisible(true);
-
+    // Ось Y (значения)
+    QtCharts::QValueAxis* axisY = new QtCharts::QValueAxis();
+    axisY->setTitleText("Value");
     chart->addAxis(axisY, Qt::AlignLeft);
     series->attachAxis(axisY);
 
-    view->setRenderHint(QPainter::Antialiasing);
+    // Устанавливаем график в представление
     view->setChart(chart);
 }
 
-GraphType ScatterGraph::getType() const
-{
+GraphType ScatterGraph::getType() const {
     return GraphType::Scatter;
+}
+
+QString ScatterGraph::getName() const {
+    return "Scatter";
 }
