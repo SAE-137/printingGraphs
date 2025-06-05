@@ -30,6 +30,9 @@ set(PROJECT_SOURCES
     jsonreader.cpp
     scattergraph.cpp
     scattergraph.h
+    GraphFactory.cpp
+    GraphFactory.h
+
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

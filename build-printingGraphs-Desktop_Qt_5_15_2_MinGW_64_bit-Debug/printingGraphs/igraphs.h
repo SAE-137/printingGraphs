@@ -5,12 +5,19 @@
 #include <QtCharts/QChartView>
 #include"datacontainer.h"
 
+enum GraphType {
+    Liner,
+    Scatter
+
+};
+
 class IGraphs
 {
 public:
     IGraphs();
     virtual ~IGraphs() = default;
     virtual void show(const DataContainer &, QtCharts::QChartView*) = 0;
+   virtual GraphType getType() = 0;
 
 };
 

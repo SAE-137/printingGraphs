@@ -62,3 +62,9 @@ void LineGraph::show(const DataContainer &dataset, QtCharts::QChartView* chartWi
 
     chartWidget->setChart(graph);
 }
+
+
+GraphType LineGraph::getType()
+{
+    return GraphType::Liner;
+}

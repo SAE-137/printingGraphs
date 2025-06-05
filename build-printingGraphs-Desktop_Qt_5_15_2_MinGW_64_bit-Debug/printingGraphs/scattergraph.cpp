@@ -62,3 +62,7 @@ void ScatterGraph::show(const DataContainer& data, QtCharts::QChartView* view)
     view->setChart(chart);
 }
 
+GraphType ScatterGraph::getType()
+{
+    return GraphType::Scatter;
+}

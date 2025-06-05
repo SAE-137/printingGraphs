@@ -13,6 +13,7 @@ public:
     LineGraph();
     ~LineGraph() = default;
     void show(const DataContainer &data, QtCharts::QChartView* view) override;
+    GraphType getType() override;
 };
 
 #endif // LINEGRAPH_H
