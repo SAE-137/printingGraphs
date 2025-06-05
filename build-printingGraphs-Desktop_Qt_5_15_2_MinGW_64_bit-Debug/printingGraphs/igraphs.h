@@ -11,7 +11,7 @@ public:
     IGraphs();
     virtual ~IGraphs() = default;
     virtual void show(const DataContainer &, QtCharts::QChartView*) = 0;
-    virtual void setData() = 0;
+
 };
 
 #endif // IGRAPHS_H

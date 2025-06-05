@@ -24,6 +24,8 @@ set(PROJECT_SOURCES
     DataContainer.h
     LineGraph.cpp
     LineGraph.h
+    IDataReader.cpp
+    IDataReader.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

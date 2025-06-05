@@ -63,6 +63,8 @@ private:
     QtCharts::QChartView* chartView;
     DataContainer dataContainer;
 
+    LineGraph m_lineGraph;
+
 };
 
 #endif // MAINWINDOW_H
