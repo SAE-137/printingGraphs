@@ -28,6 +28,8 @@ set(PROJECT_SOURCES
     IDataReader.h
     jsonreader.h
     jsonreader.cpp
+    scattergraph.cpp
+    scattergraph.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

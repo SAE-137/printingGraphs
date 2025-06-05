@@ -33,10 +33,13 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void FillComboBox();
+
 private slots:
     void on_selectionChangedSlot(const QItemSelection &selected, const QItemSelection &deselected);
     void on_setFiles();
     void on_printGraph();
+
 
 
 
@@ -57,7 +60,7 @@ private:
     //надписи
     QLabel* m_chartDiscription = nullptr;
 
-    QComboBox* m_chartsType = nullptr;
+    QComboBox* m_graphsType = nullptr;
 
     QCheckBox* m_blackWhite = nullptr;
 

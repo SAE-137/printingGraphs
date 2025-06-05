@@ -34,17 +34,27 @@ MainWindow::MainWindow(QWidget *parent)
     m_blackWhite = new QCheckBox("black-white", central);
 
     //надписи
-    m_chartDiscription = new QLabel("select the chart type", central);
+    m_chartDiscription = new QLabel("select the graph type", central);
 
-    m_chartsType = new QComboBox();
+    m_graphsType = new QComboBox();
 
     //horizontal
     QHBoxLayout* settingsLayout = new QHBoxLayout();
     settingsLayout->addWidget(m_setFiles);
     settingsLayout->addWidget(m_chartDiscription);
-    settingsLayout->addWidget(m_chartsType);
+    settingsLayout->addWidget(m_graphsType);
     settingsLayout->addWidget(m_blackWhite);
     settingsLayout->addWidget(m_printGraph);
+
+    m_listView = new QListView(this);
+
+    m_fileExplorer = new QFileSystemModel(this);
+    m_fileExplorer->setFilter(QDir::Files | QDir::NoDotAndDotDot);
+    m_fileExplorer->setRootPath(QDir::homePath());
+    m_listView->setModel(m_fileExplorer);
+    m_listView->setRootIndex(m_fileExplorer->index(QDir::homePath()));
+    statusBar()->showMessage("Current dir: " + QDir::homePath());
+    m_listView->setSelectionMode(QAbstractItemView::SingleSelection);
 
     // vertical layout
     QVBoxLayout* mainLayout = new QVBoxLayout();
@@ -55,9 +65,9 @@ MainWindow::MainWindow(QWidget *parent)
     central->setLayout(mainLayout);
     setCentralWidget(central);
 
-
-    //connects
     connect(m_setFiles, &QPushButton::clicked, this, &MainWindow::on_setFiles);
+    //connects
+    //connect(m_listView, &QListView::clicked, this, &MainWindow::on_setFiles);
 }
 
 /*
@@ -77,7 +87,7 @@ void MainWindow::on_printGraph() {
 
 void MainWindow::on_setFiles()
 {
-    QFileDialog dlg(this, "Choose folder");
+    QFileDialog dlg(this, "Choose Files");
     dlg.setFileMode(QFileDialog::Directory);
     dlg.setOption(QFileDialog::ShowDirsOnly, true);
     dlg.setOption(QFileDialog::DontUseNativeDialog);
@@ -92,6 +102,11 @@ void MainWindow::on_setFiles()
     m_fileExplorer->setRootPath(dir);
     m_listView->setRootIndex(m_fileExplorer->index(dir));
     statusBar()->showMessage("Current dir: " + dir);
+}
+
+void MainWindow::FillComboBox()
+{
+
 }
 
 MainWindow::~MainWindow()
