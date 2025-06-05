@@ -1,26 +1,22 @@
 #ifndef IGRAPHS_H
 #define IGRAPHS_H
 
-
 #include <QtCharts/QChartView>
-#include"datacontainer.h"
+#include "datacontainer.h"
 
-enum GraphType {
-    Liner,
-    Scatter
-
+enum class GraphType {
+    Scatter,
+    Line  // Изменено на Line вместо Liner для совместимости с QComboBox
 };
 
 Q_DECLARE_METATYPE(GraphType)
 
-class IGraphs
-{
+class IGraphs {
 public:
-    IGraphs();
     virtual ~IGraphs() = default;
-    virtual void show(const DataContainer &, QtCharts::QChartView*) = 0;
-   virtual GraphType getType() = 0;
-
+    virtual void show(const DataContainer& data, QtCharts::QChartView* view) = 0;
+    virtual GraphType getType() const = 0;
+    virtual QString getName() const = 0;  // Аналог getNameChart из чужого кода
 };
 
 #endif // IGRAPHS_H

@@ -17,7 +17,7 @@ public:
     ScatterGraph();
     ~ScatterGraph();
     void show(const DataContainer& data, QtCharts::QChartView* view) override;
-    GraphType getType() override;
+    GraphType getType() const override;
 
 private:
 

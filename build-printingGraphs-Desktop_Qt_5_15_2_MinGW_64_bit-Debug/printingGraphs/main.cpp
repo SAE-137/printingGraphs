@@ -2,8 +2,8 @@
 #include "IocContainer.h"
 #include "JsonReader.h"
 
-#include "scattergraph.h".h"
-#include "linegraph.h"//.h"
+#include "scattergraph.h"
+#include "linegraph.h"
 #include "graphfactory.h"
 #include"AppConfigurator.h"
 
@@ -14,7 +14,7 @@ int IOCContainer::s_nextTypeId = 115094801;
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    qRegisterMetaType<GraphType>("ChartType");
+    qRegisterMetaType<GraphType>("GraphType");
 
     AppConfigurator cfg;
     cfg.registerReaders<JsonReader>();

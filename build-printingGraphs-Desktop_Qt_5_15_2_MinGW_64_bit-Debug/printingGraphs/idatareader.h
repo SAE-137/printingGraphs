@@ -8,7 +8,7 @@ class IDataReader
 public:
     virtual ~IDataReader() = default;
 
-    virtual DataContainer loadFromFile(const QString &filePath) = 0;
+    virtual DataContainer loadFromFile(const QString &filePath) const = 0;
     virtual QDateTime interpretDate(const QString &input) const;
     virtual QString getName() const = 0;
 private:

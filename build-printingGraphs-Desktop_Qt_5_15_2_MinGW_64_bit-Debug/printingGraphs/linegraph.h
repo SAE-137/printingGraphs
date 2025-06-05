@@ -4,16 +4,16 @@
 #include <QLineSeries>
 #include <QtCharts/QChart>
 #include <QtCharts/QValueAxis>
+#include "igraphs.h"
 
-#include"igraphs.h"
-
-class LineGraph : public IGraphs
-{
+class LineGraph : public IGraphs {
 public:
-    LineGraph();
-    ~LineGraph() = default;
-    void show(const DataContainer &data, QtCharts::QChartView* view) override;
-    GraphType getType() override;
+    GraphType getType() const override;
+    void show(const DataContainer& data, QtCharts::QChartView* view) override;
+    QString getName() const override;
+
+private:
+    QString m_name = "Line Graph";  // Аналог m_name из чужого кода
 };
 
 #endif // LINEGRAPH_H

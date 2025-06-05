@@ -7,7 +7,7 @@
 class JsonReader : public IDataReader
 {
 public:
-     DataContainer loadFromFile(const QString &filePath) override;
+     DataContainer loadFromFile(const QString &filePath) const override;
      QString getName() const override;
 };
 

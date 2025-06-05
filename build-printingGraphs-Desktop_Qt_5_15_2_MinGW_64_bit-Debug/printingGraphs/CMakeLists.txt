@@ -10,22 +10,19 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Ищем Qt и необходимые компоненты
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Charts)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Charts)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Charts Sql)  # Добавлен Sql
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Charts Sql)  # Добавлен Sql
 
 set(PROJECT_SOURCES
     main.cpp
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
-    IGraphs.cpp
-    IGraphs.h
-    DataContainer.cpp
-    DataContainer.h
+    DataContainer.h  # .cpp не нужен, если нет реализации
     LineGraph.cpp
     LineGraph.h
-    IDataReader.cpp
     IDataReader.h
+    idatareader.cpp  # Предполагаю, это реализация interpretDate
     jsonreader.h
     jsonreader.cpp
     scattergraph.cpp
@@ -34,9 +31,10 @@ set(PROJECT_SOURCES
     GraphFactory.h
     ReaderFactory.cpp
     ReaderFactory.h
+    sqlreader.h
+    sqlreader.cpp
     IOCContainer.h
     AppConfigurator.h
-
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -60,6 +58,7 @@ endif()
 target_link_libraries(printingGraphs PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Charts
+    Qt${QT_VERSION_MAJOR}::Sql  # Добавлен Sql
 )
 
 set_target_properties(printingGraphs PROPERTIES
