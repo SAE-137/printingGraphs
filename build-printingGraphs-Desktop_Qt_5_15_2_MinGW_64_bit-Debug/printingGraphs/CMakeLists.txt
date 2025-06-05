@@ -19,6 +19,9 @@ set(PROJECT_SOURCES
         mainwindow.ui
         IGraphs.cpp
         IGraphs.h
+        DataContainer.cpp
+        DataContainer.h
+
 
 )
 
