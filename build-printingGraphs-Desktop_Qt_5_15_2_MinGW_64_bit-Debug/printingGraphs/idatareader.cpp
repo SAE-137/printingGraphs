@@ -34,5 +34,5 @@ QDateTime IDataReader::interpretDate(const QString &input) const
         }
     }
 
-    return QDateTime(); // invalid
+    return QDateTime();
 }

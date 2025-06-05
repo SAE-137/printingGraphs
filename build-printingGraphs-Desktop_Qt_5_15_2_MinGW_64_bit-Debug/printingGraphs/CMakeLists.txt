@@ -26,6 +26,8 @@ set(PROJECT_SOURCES
     LineGraph.h
     IDataReader.cpp
     IDataReader.h
+    jsonreader.h
+    jsonreader.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
