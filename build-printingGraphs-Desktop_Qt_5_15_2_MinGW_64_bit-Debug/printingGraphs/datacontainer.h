@@ -5,12 +5,14 @@
 #include <QPair>
 #include <QDateTime>
 
-
-
 class DataContainer
 {
 public:
-    DataContainer();
+    DataContainer() = default;
+    bool isEmpty() const { return DataPoints.isEmpty(); }
+    void clear() { DataPoints.clear(); }
+    const QVector<QPair<QDateTime, double>>& points() const { return DataPoints; }
+
     QVector<QPair<QDateTime, double>> DataPoints;
 };
 

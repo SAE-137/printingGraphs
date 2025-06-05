@@ -6,8 +6,10 @@
 
 class GraphFactory
 {
+public:
     GraphFactory(const QVector<std::shared_ptr<IGraphs>>& graphs);
-    std::shared_ptr<IGraphs> getRender(GraphType type) const;
+
+    std::shared_ptr<IGraphs> getGraph(GraphType type) const;
     QVector<std::shared_ptr<IGraphs>> show();
 private:
     QHash<GraphType, std::shared_ptr<IGraphs>> m_map;

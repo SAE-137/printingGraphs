@@ -11,6 +11,8 @@ enum GraphType {
 
 };
 
+Q_DECLARE_METATYPE(GraphType)
+
 class IGraphs
 {
 public:

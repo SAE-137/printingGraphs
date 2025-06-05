@@ -9,7 +9,7 @@ GraphFactory::GraphFactory(const QVector<std::shared_ptr<IGraphs>>& graphs) {
 }
 
 
-std::shared_ptr<IGraphs> GraphFactory::getRender(GraphType type) const {
+std::shared_ptr<IGraphs> GraphFactory::getGraph(GraphType type) const {
     return m_map.value(type, nullptr);
 }
 

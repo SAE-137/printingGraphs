@@ -9,6 +9,7 @@
 #include <QTextStream>
 
 #include "mainwindow.h"
+#include "qdebug.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -28,12 +29,12 @@ MainWindow::MainWindow(QWidget *parent)
     m_printGraph = new QPushButton("Print graph", central);
     m_blackWhite = new QCheckBox("Black and white", central);
     m_graphsType = new QComboBox(central);
-    m_chartDescription = new QLabel("Select the graph type", central);
+    m_GraphDescription = new QLabel("Select the graph type", central);
 
     // Layout для настроек
     QHBoxLayout *settingsLayout = new QHBoxLayout();
     settingsLayout->addWidget(m_openFolder);
-    settingsLayout->addWidget(m_chartDescription);
+    settingsLayout->addWidget(m_GraphDescription);
     settingsLayout->addWidget(m_graphsType);
     settingsLayout->addWidget(m_blackWhite);
     settingsLayout->addWidget(m_printGraph);
@@ -42,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_listView = new QListView(central);
     m_fileExplorer = new QFileSystemModel(this);
     m_fileExplorer->setFilter(QDir::Files | QDir::NoDotAndDotDot);
-    m_fileExplorer->setNameFilters({"*.sqlite", "*.csv"}); // Фильтр для текстовых файлов
+    m_fileExplorer->setNameFilters({"*.sqlite", "*.json"}); // Фильтр для текстовых файлов
     m_fileExplorer->setNameFilterDisables(false);
     m_listView->setModel(m_fileExplorer);
     m_listView->setRootIndex(m_fileExplorer->index(QDir::homePath()));
@@ -50,13 +51,13 @@ MainWindow::MainWindow(QWidget *parent)
     statusBar()->showMessage("Current dir: " + QDir::homePath());
 
     // График
-    chartView = new QtCharts::QChartView(this);
-    chartView->setRenderHint(QPainter::Antialiasing);
+    graphView = new QtCharts::QChartView(this);
+    graphView->setRenderHint(QPainter::Antialiasing);
 
     // Разделитель
     QSplitter *splitter = new QSplitter(central);
     splitter->addWidget(m_listView);
-    splitter->addWidget(chartView);
+    splitter->addWidget(graphView);
     splitter->setStretchFactor(0, 0);
     splitter->setStretchFactor(1, 1);
 
@@ -102,40 +103,29 @@ void MainWindow::on_openFolder()
     statusBar()->showMessage("Current dir: " + dir);
 }
 
-std::shared_ptr<JsonReader> m_readerFactory;
-std::shared_ptr<IGraphs> m_chartFactory;
+
 
 void MainWindow::on_fileSelected(const QModelIndex &index)
 {
-    QString filePath = m_fileExplorer->filePath(index);
-    QString ext  = QFileInfo(filePath).suffix();
-    //auto reader = m_readerFactory->getReader(ext);
 
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, "Error", "Cannot open file: " + filePath);
+    QString path = m_fileExplorer->filePath(index);
+
+    QString ext  = QFileInfo(path).suffix();
+
+    auto reader = m_readerFactory->getReader(ext);
+
+
+    if (!reader) {
+        qDebug() << "ljkrn;cn";
         return;
     }
+    m_data = reader->loadFromFile(path);
 
-    m_dataPoints.clear();
-    QTextStream in(&file);
-    while (!in.atEnd()) {
-        QString line = in.readLine();
-        QStringList values = line.split(" ", Qt::SkipEmptyParts);
-        if (values.size() >= 2) {
-            bool okX, okY;
-            double x = values[0].toDouble(&okX);
-            double y = values[1].toDouble(&okY);
-            if (okX && okY) {
-                m_dataPoints.append(QPointF(x, y));
-            }
-        }
-    }
-    file.close();
+    auto graph = m_graphFactory->getGraph(m_graphsType->currentData().value<GraphType>());
 
-    if (m_dataPoints.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No valid data in file: " + filePath);
-    }
+    graph->show(m_data, graphView);
+
+
 }
 
 
@@ -148,9 +138,9 @@ void MainWindow::on_printGraph()
 
 void MainWindow::on_blackWhiteToggled(bool checked)
 {
-    if (chartView->chart()) {
-        chartView->chart()->setTheme(checked ? QtCharts::QChart::ChartThemeHighContrast : QtCharts::QChart::ChartThemeLight);
-        chartView->update();
+    if (graphView->chart()) {
+        graphView->chart()->setTheme(checked ? QtCharts::QChart::ChartThemeHighContrast : QtCharts::QChart::ChartThemeLight);
+        graphView->update();
     }
 }
 

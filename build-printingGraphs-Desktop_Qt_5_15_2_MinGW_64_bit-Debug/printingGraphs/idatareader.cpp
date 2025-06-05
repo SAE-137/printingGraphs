@@ -11,28 +11,31 @@ const QVector<QString> IDataReader::DATE_PATTERNS = {
 
 QDateTime IDataReader::interpretDate(const QString &input) const
 {
-    for (const QString &pattern : DATE_PATTERNS) {
-        QDateTime dt = QDateTime::fromString(input, pattern);
-        if (dt.isValid())
-            return dt;
+    const auto parts = input.split(' ', Qt::SkipEmptyParts);
+    if(parts.size() != 2) {
+        return {};
     }
 
-    // разбиение на минуты
-    const int spaceIdx = input.indexOf(' ');
-    if (spaceIdx > 0) {
-        QString dateStr = input.left(spaceIdx);
-        QString timeStr = input.mid(spaceIdx + 1);
+    const QString datePart = parts[0];
+    const QString time = parts[1];
 
-        bool ok = false;
-        int minutes = timeStr.toInt(&ok);
-        if (ok) {
-            for (const QString &pattern : DATE_PATTERNS) {
-                QDate date = QDate::fromString(dateStr, pattern);
-                if (date.isValid())
-                    return QDateTime(date).addSecs(minutes * 60);
+    for(const auto& format: DATE_PATTERNS) {
+        QDateTime dt = QDateTime::fromString(input, format);
+        if(dt.isValid()) {
+            return dt;
+        }
+    }
+
+    bool ok = false;
+    int mins = time.toInt(&ok);
+    if(ok) {
+        for(const auto& format: DATE_PATTERNS) {
+            QDate d = QDate::fromString(datePart, format);
+            if(d.isValid()) {
+                return d.startOfDay().addSecs(mins * 60);
             }
         }
     }
 
-    return QDateTime();
+    return {};
 }

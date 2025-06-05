@@ -10,6 +10,7 @@ public:
 
     virtual DataContainer loadFromFile(const QString &filePath) = 0;
     virtual QDateTime interpretDate(const QString &input) const;
+    virtual QString getName() const = 0;
 private:
     static const QVector<QString> DATE_PATTERNS;
 };
