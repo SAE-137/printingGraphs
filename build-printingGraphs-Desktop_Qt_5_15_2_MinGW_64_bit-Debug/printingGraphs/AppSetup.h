@@ -17,10 +17,10 @@ public:
         container.SetupGraphs<GraphTs...>();
     }
 
-    DependencyContainer& getContainer() { return container; }
+    IocContainer& getContainer() { return container; }
 
 private:
-    DependencyContainer container;
+    IocContainer container;
 };
 
 #endif // APPSETUP_H

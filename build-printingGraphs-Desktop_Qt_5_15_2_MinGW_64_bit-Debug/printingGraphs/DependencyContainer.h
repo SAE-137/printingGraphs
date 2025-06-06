@@ -22,7 +22,7 @@ public:
 };
 }
 
-class DependencyContainer {
+class IocContainer {
     static int typeCounter;
     template<typename T>
     static int GetTypeId() {
@@ -74,13 +74,13 @@ public:
     template<typename... ReaderTs>
     void SetupReaders() {
         (BindFactory<ReaderTs, ReaderTs>(), ...);
-        BindFunctor<ReaderFactory, ReaderTs...>(&DependencyContainer::MakeReaderFactory<ReaderTs...>);
+        BindFunctor<ReaderFactory, ReaderTs...>(&IocContainer::MakeReaderFactory<ReaderTs...>);
     }
 
     template<typename... GraphTs>
     void SetupGraphs() {
         (BindFactory<GraphTs, GraphTs>(), ...);
-        BindFunctor<GraphFactory, GraphTs...>(&DependencyContainer::MakeGraphFactory<GraphTs...>);
+        BindFunctor<GraphFactory, GraphTs...>(&IocContainer::MakeGraphFactory<GraphTs...>);
     }
 
 private:

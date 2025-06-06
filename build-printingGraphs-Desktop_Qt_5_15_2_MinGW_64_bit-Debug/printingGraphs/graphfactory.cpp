@@ -3,7 +3,7 @@
 #include "scattergraph.h"
 
 GraphFactory::GraphFactory(const QVector<std::shared_ptr<IGraphs>>& graphs) {
-    // Добавляем переданные графики
+
     for (const auto& it : graphs) {
         if (it && !m_map.contains(it->getType())) {
             m_map[it->getType()] = it;

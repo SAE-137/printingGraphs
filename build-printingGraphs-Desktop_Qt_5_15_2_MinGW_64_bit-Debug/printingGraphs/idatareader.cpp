@@ -13,7 +13,7 @@ QDateTime IDataReader::interpretDate(const QString &input) const
 {
     const auto parts = input.split(' ', Qt::SkipEmptyParts);
 
-    // Если есть и дата, и время
+
     if (parts.size() == 2) {
         const QString datePart = parts[0];
         const QString time = parts[1];
@@ -37,13 +37,13 @@ QDateTime IDataReader::interpretDate(const QString &input) const
         }
     }
 
-    // Если только дата без времени (разбиение по дням)
+
     if (parts.size() == 1) {
         QString dateStr = parts[0];
         for (const auto& format : DATE_PATTERNS) {
             QDate d = QDate::fromString(dateStr, format);
             if (d.isValid()) {
-                return d.startOfDay(); // Установим 00:00
+                return d.startOfDay();
             }
         }
     }

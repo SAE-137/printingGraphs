@@ -9,7 +9,7 @@
 #include "readerfactory.h"
 #include "dependencycontainer.h"
 
-int DependencyContainer::typeCounter = 200;
+int IocContainer::typeCounter = 200;
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);

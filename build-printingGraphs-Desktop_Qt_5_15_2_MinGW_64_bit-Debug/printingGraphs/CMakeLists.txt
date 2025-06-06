@@ -34,8 +34,7 @@ set(PROJECT_SOURCES
     readerfactory.cpp
     graphfactory.h
     graphfactory.cpp
-    IOCContainer.h
-    AppConfigurator.h
+
     AppSetup.h
     DependencyContainer.h
 )
