@@ -1,58 +1,53 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "graphfactory.h"
-#include "readerfactory.h"
 #include <QMainWindow>
+#include <QComboBox>
+#include <QPushButton>
+#include <QCheckBox>
 #include <QFileSystemModel>
 #include <QListView>
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QtCharts/QChartView>
+#include <QtCharts>
+#include <memory>
+#include <QModelIndex>
 
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
-}
-QT_END_NAMESPACE
+#include "GraphFactory.h"
+#include "ReaderFactory.h"
+#include "graphfactory.h"
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
     Q_OBJECT
 
 public:
-    MainWindow(std::shared_ptr<GraphFactory> graphFactory,
-               std::shared_ptr<ReaderFactory> readerFactory,
-               QWidget* parent = nullptr);
+    MainWindow(std::shared_ptr<GraphFactory> chart, std::shared_ptr<ReaderFactory> reader, QWidget *parent = nullptr);
     ~MainWindow();
-
-    void PopulateGraphSelector();
-
 private slots:
-    void handleFolderOpen();
-    void handleFilePick(const QModelIndex& index);
-    void renderGraph();
-    void toggleMonochrome(bool checked);
-
+    void handleFolderSelection();
+    void loadDataFromSelection(const QModelIndex& ix);
+    void updateGraphView();
+    void toggleMonochromeMode(bool checked);
+    void exportChartToPDF();
+protected:
+    void resizeEvent(QResizeEvent* event) override;
 private:
-    void setupInterface();
-    void connectSignals();
-
-    Ui::MainWindow* ui;
-
-    QFileSystemModel* fileModel;
-    QListView* fileList;
-    QtCharts::QChartView* chartDisplay;
-    QPushButton* openDirBtn;
-    QPushButton* drawGraphBtn;
-    QCheckBox* monoMode;
-    QComboBox* graphSelector;
-    QLabel* graphLabel;
-    DataContainer currentData;
-
-    std::shared_ptr<ReaderFactory> readerFactory;
-    std::shared_ptr<GraphFactory> graphFactory;
+    QComboBox* initChartTypeSelector() const;
+    void enableSaveButtonIfNeeded();
+    void activateBWToggleIfDataReady();
+    void deactivateSaveButton();
+    void deactivateBWToggle();
+    void resetGraphView();
+    void applyMonochromeStyle();
+private:
+    QComboBox* m_comboBoxCharts = nullptr;
+    QPushButton* m_pushButtonSave = nullptr;
+    QPushButton* m_pushButtonFolder = nullptr;
+    QCheckBox* m_checkBoxBlackAndWhite = nullptr;
+    QFileSystemModel* m_fileExplorer = nullptr;
+    QListView* m_listView = nullptr;
+    QtCharts::QChartView* m_chartView = nullptr;
+    std::shared_ptr<ReaderFactory> m_readerFactory;
+    std::shared_ptr<GraphFactory> m_chartFactory;
+    DataContainer m_currentData;
 };
-
 #endif // MAINWINDOW_H

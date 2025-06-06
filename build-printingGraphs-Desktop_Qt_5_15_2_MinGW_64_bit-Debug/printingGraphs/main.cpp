@@ -7,7 +7,6 @@
 #include "scattergraph.h"
 #include "graphfactory.h"
 #include "readerfactory.h"
-
 #include "dependencycontainer.h"
 
 int DependencyContainer::typeCounter = 200;

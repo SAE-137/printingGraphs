@@ -5,40 +5,51 @@
 #include <QtCharts/QValueAxis>
 
 void ScatterGraph::show(const DataContainer& data, QtCharts::QChartView* view) {
-    if (data.isEmpty() || !view) {
-        return;
-    }
-
-    // Создаём серию для точечного графика
     QtCharts::QScatterSeries* series = new QtCharts::QScatterSeries();
-    series->setName("Data Points");
-    series->setMarkerSize(8.0);
 
-    // Заполняем серию данными
-    for (const auto& point : data.points()) {
-        series->append(point.first.toMSecsSinceEpoch(), point.second);
+    int total = data.DataPoints.size();
+    int maxPixels = view->width() > 0 ? view->width() : 1000;
+    int step = qMax(1, total/maxPixels);
+
+    double minY = data.DataPoints.first().second;
+    double maxY = minY;
+
+    if(!data.isEmpty()) {
+        for(int i = 0; i < total; i += step) {
+            minY = qMin(minY, data.DataPoints[i].second);
+            maxY = qMax(maxY, data.DataPoints[i].second);
+            series->append(data.DataPoints[i].first.toMSecsSinceEpoch(), data.DataPoints[i].second);
+        }
     }
 
-    // Создаём график
-    QtCharts::QChart* chart = new QtCharts::QChart();
+    series->setMarkerSize(5.0);
+    series->setPen(QPen(Qt::green, 1));
+    auto *chart = new QtCharts::QChart();
     chart->addSeries(series);
-    chart->setTitle("Scatter Graph");
-    chart->legend()->setVisible(true);
+    chart->legend()->hide();
 
-    // Ось X (время)
-    QtCharts::QDateTimeAxis* axisX = new QtCharts::QDateTimeAxis();
+
+    auto *axisX = new QtCharts::QDateTimeAxis();
     axisX->setFormat("dd.MM.yyyy HH:mm");
-    axisX->setTitleText("Time");
+
+    int pixelsPerTick = 100;
+    int w = view->size().width();
+    int count = qMax(2, w / pixelsPerTick);
+    axisX->setTickCount(count);
+    axisX->setLabelsAngle(-45);
+    axisX->setRange(data.DataPoints.first().first,
+                    data.DataPoints.last().first);
     chart->addAxis(axisX, Qt::AlignBottom);
     series->attachAxis(axisX);
 
-    // Ось Y (значения)
-    QtCharts::QValueAxis* axisY = new QtCharts::QValueAxis();
-    axisY->setTitleText("Value");
+    auto *axisY = new QtCharts::QValueAxis();
+    axisY->setLabelFormat("%.2f");
+    axisY->setRange(minY, maxY);
+    axisY->setGridLineVisible(true);
     chart->addAxis(axisY, Qt::AlignLeft);
     series->attachAxis(axisY);
 
-    // Устанавливаем график в представление
+    view->setRenderHint(QPainter::Antialiasing);
     view->setChart(chart);
 }
 

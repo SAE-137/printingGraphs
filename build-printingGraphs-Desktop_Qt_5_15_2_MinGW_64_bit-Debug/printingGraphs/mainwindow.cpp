@@ -1,163 +1,268 @@
-#include "mainwindow.h"
-#include "qsplitter.h"
-#include "ui_mainwindow.h"
 #include <QGridLayout>
-#include <QVBoxLayout>
-#include <QFileDialog>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QSplitter>
+#include <QVariant>
 #include <QMessageBox>
-#include <QFileInfo>
-#include <QtCharts/QChart>
 
-MainWindow::MainWindow(std::shared_ptr<GraphFactory> graphFactory,
-                       std::shared_ptr<ReaderFactory> readerFactory,
-                       QWidget* parent)
-    : QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    readerFactory(std::move(readerFactory)),
-    graphFactory(std::move(graphFactory)) {
-    ui->setupUi(this);
-    setWindowTitle("Graph Viewer");
-    setGeometry(200, 200, 1400, 600);
+#include "MainWindow.h"
 
-    setupInterface();
-    connectSignals();
-    PopulateGraphSelector();
-}
+MainWindow::MainWindow(std::shared_ptr<GraphFactory> chart, std::shared_ptr<ReaderFactory> reader, QWidget *parent)
+    : QMainWindow(parent)
+    , m_readerFactory(std::move(reader))
+    , m_chartFactory(std::move(chart))
+{
+    setWindowTitle("printingGraphs");
+    setMinimumSize(800, 600);
 
-void MainWindow::setupInterface() {
-    // Центральный виджет
-    QWidget* mainWidget = new QWidget(this);
-    QVBoxLayout* layout = new QVBoxLayout(mainWidget);
+    m_comboBoxCharts = initChartTypeSelector();
 
-    // Элементы управления
-    openDirBtn = new QPushButton("Browse Folder", mainWidget);
-    drawGraphBtn = new QPushButton("Draw Graph", mainWidget);
-    monoMode = new QCheckBox("Monochrome", mainWidget);
-    graphSelector = new QComboBox(mainWidget);
-    graphLabel = new QLabel("Choose Graph Type:", mainWidget);
+    QWidget* central = new QWidget(this);
 
-    // Компоновка настроек
-    QGridLayout* controlsLayout = new QGridLayout();
-    controlsLayout->addWidget(graphLabel, 0, 0);
-    controlsLayout->addWidget(graphSelector, 0, 1);
-    controlsLayout->addWidget(openDirBtn, 0, 2);
-    controlsLayout->addWidget(monoMode, 1, 0);
-    controlsLayout->addWidget(drawGraphBtn, 1, 1);
+    QLabel* labelCharts = new QLabel("Choose charts:", central);
 
-    // Файловый менеджер
-    fileList = new QListView(mainWidget);
-    fileModel = new QFileSystemModel(this);
-    fileModel->setFilter(QDir::Files | QDir::NoDotAndDotDot);
-    fileModel->setNameFilters(readerFactory->getExpansions());
-    fileModel->setNameFilterDisables(false);
-    fileList->setModel(fileModel);
-    fileList->setRootIndex(fileModel->index(QDir::homePath()));
-    fileList->setSelectionMode(QAbstractItemView::SingleSelection);
-    statusBar()->showMessage("Directory: " + QDir::homePath());
+    m_pushButtonSave = new QPushButton("Save chart", central);
+    m_pushButtonSave->setEnabled(false);
+    m_checkBoxBlackAndWhite = new QCheckBox("Black and white", central);
+    m_checkBoxBlackAndWhite->setEnabled(false);
 
-    // График
-    chartDisplay = new QtCharts::QChartView(mainWidget);
-    chartDisplay->setRenderHint(QPainter::Antialiasing);
+    m_pushButtonFolder = new QPushButton("Open folder", central);
 
-    // Разделитель
-    QSplitter* divider = new QSplitter(mainWidget);
-    divider->addWidget(fileList);
-    divider->addWidget(chartDisplay);
-    divider->setStretchFactor(0, 0);
-    divider->setStretchFactor(1, 1);
+    QHBoxLayout* settingsLayout = new QHBoxLayout();
+    QHBoxLayout* chartsLayout = new QHBoxLayout();
 
-    // Итоговая компоновка
-    layout->addLayout(controlsLayout);
-    layout->addWidget(divider);
-    mainWidget->setLayout(layout);
-    setCentralWidget(mainWidget);
-}
+    chartsLayout->setSpacing(5);
+    chartsLayout->setContentsMargins(0, 0, 0, 0);
+    settingsLayout->addWidget(m_pushButtonFolder);
+    chartsLayout->addWidget(labelCharts, 0);
+    chartsLayout->addWidget(m_comboBoxCharts, 1);
+    settingsLayout->addLayout(chartsLayout);
+    settingsLayout->addWidget(m_checkBoxBlackAndWhite);
+    settingsLayout->addWidget(m_pushButtonSave);
 
-void MainWindow::connectSignals() {
-    connect(openDirBtn, &QPushButton::clicked, this, &MainWindow::handleFolderOpen);
-    connect(fileList, &QListView::clicked, this, &MainWindow::handleFilePick);
-    connect(drawGraphBtn, &QPushButton::clicked, this, &MainWindow::renderGraph);
-    connect(monoMode, &QCheckBox::toggled, this, &MainWindow::toggleMonochrome);
-    connect(graphSelector, &QComboBox::currentTextChanged, this,
-            [this]() { if (!currentData.isEmpty()) renderGraph(); });
-}
+    m_listView = new QListView(this);
+    m_chartView = new QtCharts::QChartView(this);
+    QSplitter* splitter = new QSplitter(central);
+    splitter->addWidget(m_listView);
+    splitter->addWidget(m_chartView);
+    splitter->setStretchFactor(0, 0);
+    splitter->setStretchFactor(1, 1);
 
-void MainWindow::PopulateGraphSelector() {
-    for (const auto& graph : graphFactory->show()) {
-        graphSelector->addItem(graph->getName(), QVariant::fromValue(graph->getType()));
+    QVBoxLayout* mainLayout = new QVBoxLayout();
+    mainLayout->addLayout(settingsLayout);
+    mainLayout->addWidget(splitter);
+
+    central->setLayout(mainLayout);
+    setCentralWidget(central);
+
+    m_fileExplorer = new QFileSystemModel(this);
+    m_fileExplorer->setFilter(QDir::Files | QDir::NoDotAndDotDot);
+    m_fileExplorer->setRootPath(QDir::homePath());
+    m_listView->setModel(m_fileExplorer);
+    m_listView->setRootIndex(m_fileExplorer->index(QDir::homePath()));
+    statusBar()->showMessage("Current dir: " + QDir::homePath());
+    m_listView->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    QStringList filters;
+    for(int i = 0; i < m_readerFactory->getExpansions().size(); ++i) {
+        filters << "*." + m_readerFactory->getExpansions()[i];
     }
+    m_fileExplorer->setNameFilters(filters);
+    m_fileExplorer->setNameFilterDisables(false);
+
+    connect(m_pushButtonFolder, &QPushButton::clicked, this, &MainWindow::handleFolderSelection);
+
+    connect(m_listView, &QListView::clicked, this, &MainWindow::loadDataFromSelection);
+
+    connect(m_comboBoxCharts, &QComboBox::currentTextChanged, this, &MainWindow::updateGraphView);
+
+    connect(m_checkBoxBlackAndWhite, &QCheckBox::toggled, this, &MainWindow::toggleMonochromeMode);
+    connect(m_pushButtonSave, &QPushButton::clicked, this, &MainWindow::exportChartToPDF);
 }
 
-void MainWindow::handleFolderOpen() {
-    QFileDialog dialog(this, "Select Directory");
-    dialog.setFileMode(QFileDialog::Directory);
-    dialog.setOption(QFileDialog::ShowDirsOnly, true);
-    if (dialog.exec() != QDialog::Accepted) {
+void MainWindow::handleFolderSelection()
+{
+    QFileDialog dlg(this, "Choose folder");
+    dlg.setFileMode(QFileDialog::Directory);
+    dlg.setOption(QFileDialog::ShowDirsOnly, false);
+    dlg.setOption(QFileDialog::DontUseNativeDialog);
+    if (dlg.exec() != QDialog::Accepted) {
         return;
     }
-    const QString dir = dialog.selectedFiles().first();
+    const QStringList files = dlg.selectedFiles();
+    const QString dir = files.first();
     if (dir.isEmpty()) {
         return;
     }
-    fileModel->setRootPath(dir);
-    fileList->setRootIndex(fileModel->index(dir));
-    statusBar()->showMessage("Directory: " + dir);
+    m_fileExplorer->setRootPath(dir);
+    m_listView->setRootIndex(m_fileExplorer->index(dir));
+    statusBar()->showMessage("Current dir: " + dir);
 }
 
-void MainWindow::handleFilePick(const QModelIndex& index) {
-    QString filePath = fileModel->filePath(index);
-    QString extension = QFileInfo(filePath).suffix().toLower();
-
-    auto reader = readerFactory->getReader(extension);
+void MainWindow::loadDataFromSelection(const QModelIndex& ix)
+{
+    QString path = m_fileExplorer->filePath(ix);
+    QString ext  = QFileInfo(path).suffix();
+    auto reader = m_readerFactory->getReader(ext);
     if (!reader) {
-        QMessageBox::warning(this, "Error", "Unsupported file format: " + extension);
         return;
     }
-
-    currentData = reader->loadFromFile(filePath);
-    if (currentData.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No valid data in file: " + filePath);
+    m_currentData = reader->loadFromFile(path);
+    if(m_currentData.isEmpty()) {
+        resetGraphView();
+        QMessageBox::warning(this, "ERROR", "the file is empty!");
+        deactivateBWToggle();
+        deactivateSaveButton();
         return;
     }
-
-    renderGraph();
+    auto renderer = m_chartFactory->getGraph(
+        m_comboBoxCharts->currentData().value<GraphType>());
+    if (!renderer) {
+        QMessageBox::warning(this, "ERROR", "can't read this file!");
+        deactivateBWToggle();
+        deactivateSaveButton();
+        return;
+    }
+    renderer->show(m_currentData, m_chartView);
+    if(m_checkBoxBlackAndWhite->isChecked()) {
+        applyMonochromeStyle();
+    }
+    activateBWToggleIfDataReady();
+    enableSaveButtonIfNeeded();
 }
 
-void MainWindow::renderGraph() {
-    if (currentData.isEmpty()) {
-        QMessageBox::warning(this, "Error", "No data to display");
+void MainWindow::updateGraphView()
+{
+    if (m_currentData.isEmpty()) {
         return;
     }
-
-    GraphType type = graphSelector->currentData().value<GraphType>();
-    auto graph = graphFactory->getGraph(type);
-    if (!graph) {
-        QMessageBox::warning(this, "Error", "No graph renderer for selected type");
+    QVariant v = m_comboBoxCharts->currentData();
+    GraphType type = v.value<GraphType>();
+    auto renderer = m_chartFactory->getGraph(type);
+    if (!renderer) {
         return;
     }
-
-    // Очистка предыдущего графика
-    if (chartDisplay->chart()) {
-        chartDisplay->setChart(nullptr);
+    // перерисовываем график
+    renderer->show(m_currentData, m_chartView);
+    if(m_checkBoxBlackAndWhite->isChecked()) {
+        applyMonochromeStyle();
     }
+}
 
-    graph->show(currentData, chartDisplay);
+void MainWindow::toggleMonochromeMode(bool checked)
+{
+    if (m_chartView->chart()) {
+        if (checked) {
+            applyMonochromeStyle();
+        } else {
 
-    if (monoMode->isChecked()) {
-        chartDisplay->chart()->setTheme(QtCharts::QChart::ChartThemeHighContrast);
+            GraphType type = m_comboBoxCharts->currentData().value<GraphType>();
+            auto renderer = m_chartFactory->getGraph(type);
+            renderer->show(m_currentData, m_chartView);
+        }
+    }
+}
+
+void MainWindow::exportChartToPDF()
+{
+    QString filePath = QFileDialog::getSaveFileName(this, "Save to...", "", "PDF (*.pdf)");
+    if (!filePath.isEmpty())
+    {
+        QPdfWriter pdfWriter(filePath);
+        QPainter painter(&pdfWriter);
+        m_chartView->render(&painter);
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+    if (m_currentData.isEmpty()) {
+        return;
+    }
+    QVariant v = m_comboBoxCharts->currentData();
+    GraphType type = v.value<GraphType>();
+    auto renderer = m_chartFactory->getGraph(type);
+    if (!renderer) {
+        return;
+    }
+    // перерисовываем график
+    renderer->show(m_currentData, m_chartView);
+    if(m_checkBoxBlackAndWhite->isChecked()) {
+        applyMonochromeStyle();
+    }
+}
+
+QComboBox* MainWindow::initChartTypeSelector() const
+{
+    QComboBox* comboBox = new QComboBox();
+    QVector<std::shared_ptr<IGraphs>> renderers = m_chartFactory->show();
+    for(auto& r: renderers) {
+        comboBox->addItem(r->getName(), QVariant::fromValue(r->getType()));
+    }
+    return comboBox;
+}
+
+void MainWindow::enableSaveButtonIfNeeded()
+{
+    if(!m_pushButtonSave->isEnabled()) {
+        m_pushButtonSave->setEnabled(true);
     } else {
-        chartDisplay->chart()->setTheme(QtCharts::QChart::ChartThemeLight);
+        return;
     }
 }
 
-void MainWindow::toggleMonochrome(bool checked) {
-    if (chartDisplay->chart()) {
-        chartDisplay->chart()->setTheme(checked ? QtCharts::QChart::ChartThemeHighContrast
-                                                : QtCharts::QChart::ChartThemeLight);
-        chartDisplay->update();
+void MainWindow::activateBWToggleIfDataReady()
+{
+    if(!m_checkBoxBlackAndWhite->isEnabled()) {
+        m_checkBoxBlackAndWhite->setEnabled(true);
+    } else {
+        return;
     }
 }
 
-MainWindow::~MainWindow() {
-    delete ui;
+void MainWindow::deactivateSaveButton()
+{
+    if(m_pushButtonSave->isEnabled()) {
+        m_pushButtonSave->setEnabled(false);
+    } else {
+        return;
+    }
 }
+
+void MainWindow::deactivateBWToggle()
+{
+    if(m_checkBoxBlackAndWhite->isEnabled()) {
+        m_checkBoxBlackAndWhite->setEnabled(false);
+    } else {
+        return;
+    }
+}
+
+void MainWindow::resetGraphView()
+{
+    if (auto *chart = m_chartView->chart()) {
+        chart->removeAllSeries();
+        const auto axes = chart->axes();
+        for (auto *axis : axes) {
+            chart->removeAxis(axis);
+        }
+        chart->setTitle({});
+    }
+}
+
+void MainWindow::applyMonochromeStyle()
+{
+    m_chartView->chart()->setTheme(QtCharts::QChart::ChartThemeHighContrast);
+    if (auto *axisX = m_chartView->chart()->axes(Qt::Horizontal).value(0)) {
+        axisX->setShadesVisible(false);
+    }
+    if (auto *axisY = m_chartView->chart()->axes(Qt::Vertical).value(0)) {
+        axisY->setShadesVisible(false);
+    }
+}
+
+MainWindow::~MainWindow()
+{
+}
+
