@@ -1,7 +1,7 @@
 #ifndef APPSETUP_H
 #define APPSETUP_H
 
-#include "IOCContainer.h"
+#include "dependencycontainer.h"
 
 class AppSetup {
 public:
@@ -17,10 +17,10 @@ public:
         container.SetupGraphs<GraphTs...>();
     }
 
-    IOCContainer& getContainer() { return container; }
+    DependencyContainer& getContainer() { return container; }
 
 private:
-    IOCContainer container;
+    DependencyContainer container;
 };
 
 #endif // APPSETUP_H

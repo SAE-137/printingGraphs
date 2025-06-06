@@ -1,29 +1,29 @@
-#include "MainWindow.h"
-#include "IocContainer.h"
-#include "JsonReader.h"
-
-#include "scattergraph.h"
-#include "linegraph.h"
-#include "graphfactory.h"
-#include"AppConfigurator.h"
-
 #include <QApplication>
+#include "mainwindow.h"
+#include "appsetup.h"
+#include "jsonreader.h"
+#include "sqlreader.h"
+#include "linegraph.h"
+#include "scattergraph.h"
+#include "graphfactory.h"
+#include "readerfactory.h"
 
-int IOCContainer::s_nextTypeId = 115094801;
+#include "dependencycontainer.h"
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
+int DependencyContainer::typeCounter = 200;
+
+int main(int argc, char* argv[]) {
+    QApplication app(argc, argv);
     qRegisterMetaType<GraphType>("GraphType");
 
-    AppConfigurator cfg;
-    cfg.registerReaders<JsonReader>();
-    cfg.registerCharts<ScatterGraph, LineGraph>();
+    AppSetup setup;
+    setup.configureReaders<JsonReader, SqlReader>();
+    setup.configureGraphs<LineGraph, ScatterGraph>();
 
-    auto readerFactory = cfg.container().GetObject<ReaderFactory>();
-    auto chartFactory  = cfg.container().GetObject<GraphFactory>();
+    auto readerFactory = setup.getContainer().Resolve<ReaderFactory>();
+    auto graphFactory = setup.getContainer().Resolve<GraphFactory>();
 
-    MainWindow w(chartFactory, readerFactory);
-    w.show();
-    return a.exec();
+    MainWindow window(graphFactory, readerFactory);
+    window.show();
+    return app.exec();
 }

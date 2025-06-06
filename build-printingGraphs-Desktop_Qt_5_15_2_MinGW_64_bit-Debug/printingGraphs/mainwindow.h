@@ -2,9 +2,7 @@
 #define MAINWINDOW_H
 
 #include "graphfactory.h"
-#include "igraphs.h"
-#include"idatareader.h"
-#include"readerfactory.h"
+#include "readerfactory.h"
 #include <QMainWindow>
 #include <QFileSystemModel>
 #include <QListView>
@@ -13,7 +11,6 @@
 #include <QComboBox>
 #include <QCheckBox>
 #include <QtCharts/QChartView>
-#include <QtCharts/QLineSeries>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -21,41 +18,41 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MainWindow(std::shared_ptr<GraphFactory> graph, std::shared_ptr<ReaderFactory> reader, QWidget *parent = nullptr);
+    MainWindow(std::shared_ptr<GraphFactory> graphFactory,
+               std::shared_ptr<ReaderFactory> readerFactory,
+               QWidget* parent = nullptr);
     ~MainWindow();
 
-    void FillComboBox();
+    void PopulateGraphSelector();
 
 private slots:
-    void on_openFolder();
-    void on_fileSelected(const QModelIndex &index);
-    void on_printGraph();
-    void on_blackWhiteToggled(bool checked);
+    void handleFolderOpen();
+    void handleFilePick(const QModelIndex& index);
+    void renderGraph();
+    void toggleMonochrome(bool checked);
 
 private:
-    Ui::MainWindow *ui;
+    void setupInterface();
+    void connectSignals();
 
-    QFileSystemModel *m_fileExplorer;
-    QListView *m_listView;
-    QtCharts::QChartView *graphView;
-    QPushButton *m_openFolder;
-    QPushButton *m_printGraph;
-    QCheckBox *m_blackWhite;
-    QComboBox *m_graphsType;
-    QLabel *m_GraphDescription;
-    DataContainer m_data;
+    Ui::MainWindow* ui;
 
+    QFileSystemModel* fileModel;
+    QListView* fileList;
+    QtCharts::QChartView* chartDisplay;
+    QPushButton* openDirBtn;
+    QPushButton* drawGraphBtn;
+    QCheckBox* monoMode;
+    QComboBox* graphSelector;
+    QLabel* graphLabel;
+    DataContainer currentData;
 
-    QVector<QPointF> m_dataPoints;
-
-
-    std::shared_ptr<ReaderFactory> m_readerFactory;
-    std::shared_ptr<GraphFactory> m_graphFactory;
+    std::shared_ptr<ReaderFactory> readerFactory;
+    std::shared_ptr<GraphFactory> graphFactory;
 };
 
 #endif // MAINWINDOW_H

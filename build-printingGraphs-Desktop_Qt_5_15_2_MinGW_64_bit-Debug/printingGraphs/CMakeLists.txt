@@ -36,6 +36,8 @@ set(PROJECT_SOURCES
     graphfactory.cpp
     IOCContainer.h
     AppConfigurator.h
+    AppSetup.h
+    DependencyContainer.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

@@ -1,151 +1,163 @@
-#include <QSplitter>
+#include "mainwindow.h"
+#include "qsplitter.h"
+#include "ui_mainwindow.h"
+#include <QGridLayout>
 #include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QFileInfo>
 #include <QtCharts/QChart>
-#include <QtCharts/QLineSeries>
-#include <QFile>
-#include <QTextStream>
 
-#include "mainwindow.h"
-#include "qdebug.h"
-#include "ui_mainwindow.h"
-
-MainWindow::MainWindow(std::shared_ptr<GraphFactory> graph, std::shared_ptr<ReaderFactory> reader, QWidget *parent)
-    : QMainWindow(parent)
-    , m_readerFactory(std::move(reader))
-    , m_graphFactory(std::move(graph))
-{
+MainWindow::MainWindow(std::shared_ptr<GraphFactory> graphFactory,
+                       std::shared_ptr<ReaderFactory> readerFactory,
+                       QWidget* parent)
+    : QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    readerFactory(std::move(readerFactory)),
+    graphFactory(std::move(graphFactory)) {
     ui->setupUi(this);
-    setGeometry(100, 100, 1500, 500);
-    setWindowTitle("Charts App");
+    setWindowTitle("Graph Viewer");
+    setGeometry(200, 200, 1400, 600);
 
+    setupInterface();
+    connectSignals();
+    PopulateGraphSelector();
+}
+
+void MainWindow::setupInterface() {
     // Центральный виджет
-    QWidget *central = new QWidget(this);
-    QVBoxLayout *mainLayout = new QVBoxLayout(central);
+    QWidget* mainWidget = new QWidget(this);
+    QVBoxLayout* layout = new QVBoxLayout(mainWidget);
 
-    // Кнопки и элементы управления
-    m_openFolder = new QPushButton("Open folder", central);
-    m_printGraph = new QPushButton("Print graph", central);
-    m_blackWhite = new QCheckBox("Black and white", central);
-    m_graphsType = new QComboBox(central);
-    m_GraphDescription = new QLabel("Select the graph type", central);
+    // Элементы управления
+    openDirBtn = new QPushButton("Browse Folder", mainWidget);
+    drawGraphBtn = new QPushButton("Draw Graph", mainWidget);
+    monoMode = new QCheckBox("Monochrome", mainWidget);
+    graphSelector = new QComboBox(mainWidget);
+    graphLabel = new QLabel("Choose Graph Type:", mainWidget);
 
-    // Layout для настроек
-    QHBoxLayout *settingsLayout = new QHBoxLayout();
-    settingsLayout->addWidget(m_openFolder);
-    settingsLayout->addWidget(m_GraphDescription);
-    settingsLayout->addWidget(m_graphsType);
-    settingsLayout->addWidget(m_blackWhite);
-    settingsLayout->addWidget(m_printGraph);
+    // Компоновка настроек
+    QGridLayout* controlsLayout = new QGridLayout();
+    controlsLayout->addWidget(graphLabel, 0, 0);
+    controlsLayout->addWidget(graphSelector, 0, 1);
+    controlsLayout->addWidget(openDirBtn, 0, 2);
+    controlsLayout->addWidget(monoMode, 1, 0);
+    controlsLayout->addWidget(drawGraphBtn, 1, 1);
 
     // Файловый менеджер
-    m_listView = new QListView(central);
-    m_fileExplorer = new QFileSystemModel(this);
-    m_fileExplorer->setFilter(QDir::Files | QDir::NoDotAndDotDot);
-    m_fileExplorer->setNameFilters({"*.sqlite", "*.json"}); // Фильтр для текстовых файлов
-    m_fileExplorer->setNameFilterDisables(false);
-    m_listView->setModel(m_fileExplorer);
-    m_listView->setRootIndex(m_fileExplorer->index(QDir::homePath()));
-    m_listView->setSelectionMode(QAbstractItemView::SingleSelection);
-    statusBar()->showMessage("Current dir: " + QDir::homePath());
+    fileList = new QListView(mainWidget);
+    fileModel = new QFileSystemModel(this);
+    fileModel->setFilter(QDir::Files | QDir::NoDotAndDotDot);
+    fileModel->setNameFilters(readerFactory->getExpansions());
+    fileModel->setNameFilterDisables(false);
+    fileList->setModel(fileModel);
+    fileList->setRootIndex(fileModel->index(QDir::homePath()));
+    fileList->setSelectionMode(QAbstractItemView::SingleSelection);
+    statusBar()->showMessage("Directory: " + QDir::homePath());
 
     // График
-    graphView = new QtCharts::QChartView(this);
-    graphView->setRenderHint(QPainter::Antialiasing);
+    chartDisplay = new QtCharts::QChartView(mainWidget);
+    chartDisplay->setRenderHint(QPainter::Antialiasing);
 
     // Разделитель
-    QSplitter *splitter = new QSplitter(central);
-    splitter->addWidget(m_listView);
-    splitter->addWidget(graphView);
-    splitter->setStretchFactor(0, 0);
-    splitter->setStretchFactor(1, 1);
+    QSplitter* divider = new QSplitter(mainWidget);
+    divider->addWidget(fileList);
+    divider->addWidget(chartDisplay);
+    divider->setStretchFactor(0, 0);
+    divider->setStretchFactor(1, 1);
 
-    // Компоновка
-    mainLayout->addLayout(settingsLayout);
-    mainLayout->addWidget(splitter);
-    central->setLayout(mainLayout);
-    setCentralWidget(central);
-
-    // Заполняем QComboBox
-    FillComboBox();
-
-    // Подключение сигналов
-    connect(m_openFolder, &QPushButton::clicked, this, &MainWindow::on_openFolder);
-    connect(m_listView, &QListView::clicked, this, &MainWindow::on_fileSelected);
-    connect(m_printGraph, &QPushButton::clicked, this, &MainWindow::on_printGraph);
-    connect(m_blackWhite, &QCheckBox::toggled, this, &MainWindow::on_blackWhiteToggled);
+    // Итоговая компоновка
+    layout->addLayout(controlsLayout);
+    layout->addWidget(divider);
+    mainWidget->setLayout(layout);
+    setCentralWidget(mainWidget);
 }
 
-void MainWindow::FillComboBox()
-{
-    m_graphsType->addItem("Line Graph", QVariant("line"));
-    m_graphsType->addItem("Scatter Graph", QVariant("scatter"));
-
+void MainWindow::connectSignals() {
+    connect(openDirBtn, &QPushButton::clicked, this, &MainWindow::handleFolderOpen);
+    connect(fileList, &QListView::clicked, this, &MainWindow::handleFilePick);
+    connect(drawGraphBtn, &QPushButton::clicked, this, &MainWindow::renderGraph);
+    connect(monoMode, &QCheckBox::toggled, this, &MainWindow::toggleMonochrome);
+    connect(graphSelector, &QComboBox::currentTextChanged, this,
+            [this]() { if (!currentData.isEmpty()) renderGraph(); });
 }
 
-void MainWindow::on_openFolder()
-{
-    QFileDialog dlg(this, "Choose folder");
-    dlg.setFileMode(QFileDialog::Directory);
-    dlg.setOption(QFileDialog::ShowDirsOnly, false);
-    dlg.setOption(QFileDialog::DontUseNativeDialog);
-    if (dlg.exec() != QDialog::Accepted) {
+void MainWindow::PopulateGraphSelector() {
+    for (const auto& graph : graphFactory->show()) {
+        graphSelector->addItem(graph->getName(), QVariant::fromValue(graph->getType()));
+    }
+}
+
+void MainWindow::handleFolderOpen() {
+    QFileDialog dialog(this, "Select Directory");
+    dialog.setFileMode(QFileDialog::Directory);
+    dialog.setOption(QFileDialog::ShowDirsOnly, true);
+    if (dialog.exec() != QDialog::Accepted) {
         return;
     }
-    const QStringList files = dlg.selectedFiles();
-    const QString dir = files.first();
+    const QString dir = dialog.selectedFiles().first();
     if (dir.isEmpty()) {
         return;
     }
-    m_fileExplorer->setRootPath(dir);
-    m_listView->setRootIndex(m_fileExplorer->index(dir));
-    statusBar()->showMessage("Current dir: " + dir);
+    fileModel->setRootPath(dir);
+    fileList->setRootIndex(fileModel->index(dir));
+    statusBar()->showMessage("Directory: " + dir);
 }
 
+void MainWindow::handleFilePick(const QModelIndex& index) {
+    QString filePath = fileModel->filePath(index);
+    QString extension = QFileInfo(filePath).suffix().toLower();
 
-
-void MainWindow::on_fileSelected(const QModelIndex &index)
-{
-
-    QString path = m_fileExplorer->filePath(index);
-
-    QString ext  = QFileInfo(path).suffix();
-
-    auto reader = m_readerFactory->getReader(ext);
-
-
+    auto reader = readerFactory->getReader(extension);
     if (!reader) {
-        qDebug() << "ljkrn;cn";
+        QMessageBox::warning(this, "Error", "Unsupported file format: " + extension);
         return;
     }
-    m_data = reader->loadFromFile(path);
 
-    auto graph = m_graphFactory->getGraph(m_graphsType->currentData().value<GraphType>());
+    currentData = reader->loadFromFile(filePath);
+    if (currentData.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No valid data in file: " + filePath);
+        return;
+    }
 
-    graph->show(m_data, graphView);
-
-
+    renderGraph();
 }
 
+void MainWindow::renderGraph() {
+    if (currentData.isEmpty()) {
+        QMessageBox::warning(this, "Error", "No data to display");
+        return;
+    }
 
+    GraphType type = graphSelector->currentData().value<GraphType>();
+    auto graph = graphFactory->getGraph(type);
+    if (!graph) {
+        QMessageBox::warning(this, "Error", "No graph renderer for selected type");
+        return;
+    }
 
+    // Очистка предыдущего графика
+    if (chartDisplay->chart()) {
+        chartDisplay->setChart(nullptr);
+    }
 
-void MainWindow::on_printGraph()
-{
+    graph->show(currentData, chartDisplay);
 
-}
-
-void MainWindow::on_blackWhiteToggled(bool checked)
-{
-    if (graphView->chart()) {
-        graphView->chart()->setTheme(checked ? QtCharts::QChart::ChartThemeHighContrast : QtCharts::QChart::ChartThemeLight);
-        graphView->update();
+    if (monoMode->isChecked()) {
+        chartDisplay->chart()->setTheme(QtCharts::QChart::ChartThemeHighContrast);
+    } else {
+        chartDisplay->chart()->setTheme(QtCharts::QChart::ChartThemeLight);
     }
 }
 
-MainWindow::~MainWindow()
-{
+void MainWindow::toggleMonochrome(bool checked) {
+    if (chartDisplay->chart()) {
+        chartDisplay->chart()->setTheme(checked ? QtCharts::QChart::ChartThemeHighContrast
+                                                : QtCharts::QChart::ChartThemeLight);
+        chartDisplay->update();
+    }
+}
+
+MainWindow::~MainWindow() {
     delete ui;
 }
